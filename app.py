@@ -3,7 +3,7 @@ import os
 import datetime
 from helpers.ui_helpers import add_custom_css
 from helpers.todo_helpers import (
-    generate_to_do_list, save_todo_list, parse_todo_to_df,
+    generate_to_do_list, save_todo_list, parse_todo_to_df, 
     convert_df_to_text, load_saved_lists, delete_todo_list,
     export_as_excel
 )
@@ -44,6 +44,7 @@ add_custom_css()
 from views.sidebar import render_sidebar
 from views.create_tab import render_create_tab
 from views.manage_tab import render_manage_tab
+from views.calendar_tab import render_calendar_tab
 from views.deleted_tasks_tab import render_deleted_tasks_tab
 from views.help_tab import render_help_tab
 from views.model_info import display_model_info
@@ -84,8 +85,8 @@ if missing_packages:
     </div>
     """, unsafe_allow_html=True)
 
-# Main tabs with refined styling
-tabs = st.tabs(["Create New", "Manage Current", "Deleted Tasks", "Help"])
+# Main tabs with refined styling - Added Calendar tab
+tabs = st.tabs(["Create New", "Manage Current", "Calendar", "Deleted Tasks", "Help"])
 
 # Create New Tab
 with tabs[0]:
@@ -94,13 +95,17 @@ with tabs[0]:
 # Manage Current Tab
 with tabs[1]:
     render_manage_tab()
+    
+# Calendar Tab - New!
+with tabs[2]:
+    render_calendar_tab()
 
 # Deleted Tasks Tab
-with tabs[2]:
+with tabs[3]:
     render_deleted_tasks_tab()
 
 # Help Tab
-with tabs[3]:
+with tabs[4]:
     render_help_tab()
 
 # Footer

@@ -1,12 +1,12 @@
 import streamlit as st
 import pandas as pd
 from helpers.todo_helpers import (
-    parse_todo_to_df, convert_df_to_text,
+    parse_todo_to_df, convert_df_to_text, 
     save_todo_list, export_as_excel
 )
 
 def render_manage_tab():
-    """Render the Manage Current tab content with matching styling to reference images"""
+    """Render the Manage Current tab content with date support"""
     if st.session_state.current_list:
         # Display list name with styled header
         st.markdown(f"""
@@ -18,11 +18,11 @@ def render_manage_tab():
             {st.session_state.list_name}
         </h2>
         """, unsafe_allow_html=True)
-
+        
         # Show the original text
         with st.expander("View Raw To-Do List", expanded=True):
             st.markdown(st.session_state.current_list)
-
+        
         # Try to parse into a dataframe for interactive editing
         try:
             # Only parse if we don't already have a dataframe or if it's a newly loaded list
@@ -31,7 +31,7 @@ def render_manage_tab():
                 st.session_state.task_df = todo_df
             else:
                 todo_df = st.session_state.task_df
-
+            
             # Interactive table header
             st.markdown("""
             <div class="section-header">
@@ -42,11 +42,11 @@ def render_manage_tab():
                 Edit, complete, or delete tasks as needed
             </p>
             """, unsafe_allow_html=True)
-
+            
             # Add delete button to each row
             todo_df_display = todo_df[~todo_df["Deleted"]].copy()  # Only show non-deleted tasks
-
-            # Create columns for the data editor
+            
+            # Create columns for the data editor with Due Date added
             col_config = {
                 "ID": st.column_config.TextColumn(
                     "ID",
@@ -82,6 +82,14 @@ def render_manage_tab():
                     help="Task category",
                     width="medium",
                 ),
+                "Due Date": st.column_config.DateColumn(
+                    "Due Date",
+                    help="Task due date",
+                    min_value=None,
+                    max_value=None,
+                    format="YYYY-MM-DD",
+                    step=1,
+                ),
                 "Time Estimate": st.column_config.TextColumn(
                     "Time Estimate",
                     help="Estimated time to complete",
@@ -93,21 +101,21 @@ def render_manage_tab():
                     width="medium",
                 ),
             }
-
+            
             # If "Delete" column doesn't exist, add it
             if "Delete" not in todo_df_display.columns:
                 todo_df_display["Delete"] = False
-
+            
             # Show the data editor without the Deleted column
             edited_df = st.data_editor(
                 todo_df_display,
                 use_container_width=True,
                 hide_index=True,
                 column_config=col_config,
-                column_order=["ID", "Completed", "Delete", "Task", "Priority", "Category", "Time Estimate", "Dependencies"],
+                column_order=["ID", "Completed", "Delete", "Task", "Priority", "Category", "Due Date", "Time Estimate", "Dependencies"],
                 disabled=["ID"]
             )
-
+            
             # Process any deleted tasks
             if "Delete" in edited_df.columns:
                 tasks_to_delete = edited_df[edited_df["Delete"]]["ID"].tolist()
@@ -118,14 +126,14 @@ def render_manage_tab():
                             idx = todo_df[todo_df["ID"] == task_id].index[0]
                             todo_df.at[idx, "Deleted"] = True
                             st.session_state.deleted_tasks.append(todo_df.loc[idx].to_dict())
-
+                    
                     # Update the display dataframe to reflect deletions
                     edited_df = edited_df[~edited_df["Delete"]]
-
+                
                 # Remove the Delete column from the edited dataframe
                 if "Delete" in edited_df.columns:
                     edited_df = edited_df.drop("Delete", axis=1)
-
+            
             # Update the non-deleted tasks in the main dataframe with any other edits
             for _, row in edited_df.iterrows():
                 task_id = row["ID"]
@@ -134,13 +142,13 @@ def render_manage_tab():
                     for col in edited_df.columns:
                         if col != "Delete" and col in todo_df.columns:
                             todo_df.at[idx, col] = row[col]
-
+            
             # Update the session state
             st.session_state.task_df = todo_df
-
+            
             # Add spacing before the analytics
             st.markdown("<div style='height: 25px;'></div>", unsafe_allow_html=True)
-
+            
             # Analytics section header
             st.markdown("""
             <div class="section-header">
@@ -151,31 +159,40 @@ def render_manage_tab():
                 Summary of progress and task distribution
             </p>
             """, unsafe_allow_html=True)
-
-            # Analytics cards
-            col1, col2, col3 = st.columns(3)
-
+            
+            # Analytics cards with due date information
+            col1, col2, col3, col4 = st.columns(4)
+            
             with col1:
                 completed = edited_df["Completed"].sum()
                 total = len(edited_df)
                 completion_rate = completed / total * 100 if total > 0 else 0
                 st.metric("Completion Rate", f"{completion_rate:.1f}%", f"{completed}/{total} tasks")
-
+            
             with col2:
                 priority_counts = edited_df["Priority"].value_counts()
                 st.metric(
-                    "High Priority Tasks",
-                    f"{priority_counts.get('High', 0)}",
+                    "High Priority Tasks", 
+                    f"{priority_counts.get('High', 0)}", 
                     f"{priority_counts.get('High', 0)/total*100:.1f}% of total" if total > 0 else "0%"
                 )
-
+            
             with col3:
                 categories = edited_df["Category"].nunique()
                 st.metric("Task Categories", f"{categories}")
-
+                
+            with col4:
+                # Count tasks with due dates
+                tasks_with_dates = edited_df['Due Date'].notna().sum()
+                st.metric(
+                    "Scheduled Tasks", 
+                    f"{tasks_with_dates}", 
+                    f"{tasks_with_dates/total*100:.1f}% of total" if total > 0 else "0%"
+                )
+            
             # Add spacing before export options
             st.markdown("<div style='height: 25px;'></div>", unsafe_allow_html=True)
-
+            
             # Export options header to match reference image
             st.markdown("""
             <div class="section-header">
@@ -186,21 +203,21 @@ def render_manage_tab():
                 Save or export your to-do list in different formats
             </p>
             """, unsafe_allow_html=True)
-
+            
             col1, col2, col3 = st.columns(3)
-
+            
             with col1:
                 # Plain save button - no gradient
                 if st.button("💾 Save To-Do List", use_container_width=True):
                     # Update the content based on the current dataframe state
                     updated_content = convert_df_to_text(todo_df)
                     st.session_state.current_list = updated_content
-
+                    
                     # Save with the updated content
                     success = save_todo_list(st.session_state.list_name, updated_content)
                     if success:
                         st.success(f"✅ Saved '{st.session_state.list_name}' successfully!")
-
+            
             with col2:
                 try:
                     # Add gradient class for Excel button
@@ -212,7 +229,7 @@ def render_manage_tab():
                     }
                     </style>
                     """, unsafe_allow_html=True)
-
+                    
                     st.download_button(
                         label="📊 Export as Excel",
                         data=excel_data,
@@ -223,7 +240,7 @@ def render_manage_tab():
                 except Exception as excel_error:
                     st.warning(f"Excel export issue: {str(excel_error)}")
                     st.info("Install xlsxwriter library for better Excel exports: pip install xlsxwriter")
-
+            
             with col3:
                 # Add gradient class for Text button
                 st.markdown("""
@@ -233,7 +250,7 @@ def render_manage_tab():
                 }
                 </style>
                 """, unsafe_allow_html=True)
-
+                
                 # Get updated text based on current dataframe
                 updated_text = convert_df_to_text(todo_df)
                 st.download_button(
@@ -243,10 +260,10 @@ def render_manage_tab():
                     mime="text/plain",
                     use_container_width=True
                 )
-
+                
         except Exception as e:
             st.warning(f"Could not parse list into interactive format: {str(e)}")
-
+            
             # Simple export option for plain text
             st.download_button(
                 label="📥 Download To-Do List",

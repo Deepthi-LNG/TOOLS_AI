@@ -1,23 +1,25 @@
 import streamlit as st
 
 def add_custom_css():
-    """Add custom CSS with refined dark theme matching exactly the reference images"""
+    """Add custom CSS with refined dark theme and calendar styling"""
     css = """
     <style>
-        /* Dark Theme with exact styling from reference */
+        /* Dark Theme with Glass Effects */
         :root {
             --bg-dark: #121212;
             --bg-card: #1e1e1e;
             --bg-sidebar: #1a1a1a;
-            --glass-bg: rgba(30, 30, 30, 0.4);
-            --glass-border: 1px solid rgba(60, 60, 60, 0.3);
-            --glass-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            --glass-bg: rgba(40, 40, 40, 0.4);
+            --glass-border: 1px solid rgba(80, 80, 80, 0.3);
+            --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
             --text-primary: rgba(255, 255, 255, 0.87);
             --text-secondary: rgba(255, 255, 255, 0.6);
+            --accent-purple: #8c61ff;
             --accent-blue-start: #536FED;
             --accent-blue-end: #59C2FF;
-            --accent-purple: #8c61ff;
+            --accent-blue: #5b8af5;
             --accent-teal: #4cceac;
+            --accent-pink: #ec4899;
             --success-color: #4CAF50;
             --warning-color: #ff9800;
             --error-color: #f44336;
@@ -290,6 +292,116 @@ def add_custom_css():
             opacity: 0.7;
         }
         
+        /* Calendar styling */
+        .calendar-container {
+            margin: 20px 0;
+        }
+        
+        /* Calendar navigation buttons */
+        .calendar-nav-btn {
+            background: #2a2a2a !important;
+            color: var(--text-primary) !important;
+            border: none !important;
+            border-radius: var(--radius-md) !important;
+            padding: 0.5rem 1rem !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            gap: 5px !important;
+            transition: all 0.3s ease !important;
+        }
+        
+        .calendar-nav-btn:hover {
+            background: #333333 !important;
+        }
+        
+        /* Calendar grid and cells */
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 8px;
+            margin-top: 20px;
+        }
+        
+        .calendar-header {
+            text-align: center;
+            padding: 10px;
+            font-weight: bold;
+            background: rgba(60, 60, 60, 0.3);
+            border-radius: 8px;
+        }
+        
+        .calendar-day {
+            padding: 10px;
+            min-height: 80px;
+            background: rgba(50, 50, 50, 0.3);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            position: relative;
+        }
+        
+        .calendar-day:hover {
+            background: rgba(70, 70, 70, 0.4);
+        }
+        
+        .calendar-day.other-month {
+            background: rgba(40, 40, 40, 0.2);
+            color: rgba(255, 255, 255, 0.4);
+        }
+        
+        .calendar-day.selected {
+            background: rgba(140, 97, 255, 0.2);
+            border: 1px solid rgba(140, 97, 255, 0.4);
+        }
+        
+        .calendar-day.today {
+            border: 1px solid rgba(255, 255, 255, 0.5);
+        }
+        
+        .day-number {
+            font-size: 1rem;
+            font-weight: 500;
+            margin-bottom: 5px;
+        }
+        
+        .task-indicator {
+            display: flex;
+            gap: 3px;
+            flex-wrap: wrap;
+            margin-top: 5px;
+        }
+        
+        .task-dot {
+            width: 6px;
+            height: 6px;
+            background: rgba(140, 97, 255, 0.7);
+            border-radius: 50%;
+        }
+        
+        .task-count {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            background: rgba(140, 97, 255, 0.6);
+            color: white;
+            border-radius: 20px;
+            padding: 1px 8px;
+            font-size: 0.7rem;
+            font-weight: bold;
+        }
+        
+        /* Task checkbox styling */
+        .stCheckbox > label > div[data-testid="stMarkdownContainer"] > p {
+            margin-bottom: 0 !important;
+        }
+        
+        /* Completion checkbox styling */
+        [data-testid="stCheckbox"] input:checked ~ div div::before {
+            background-color: var(--accent-purple) !important;
+            border-color: var(--accent-purple) !important;
+        }
+        
         /* Mobile responsive adjustments */
         @media (max-width: 768px) {
             .main .block-container {
@@ -298,6 +410,19 @@ def add_custom_css():
             
             h1 {
                 font-size: 1.8rem !important;
+            }
+            
+            .calendar-grid {
+                gap: 4px;
+            }
+            
+            .calendar-day {
+                min-height: 60px;
+                padding: 5px;
+            }
+            
+            .day-number {
+                font-size: 0.8rem;
             }
         }
     </style>
